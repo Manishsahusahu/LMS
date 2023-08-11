@@ -1,8 +1,8 @@
-import express from "express";
+import express, { json } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
-import userRoutes from './routes/user.routes.js'
+import userRoutes from "./routes/user.routes.js";
 
 const app = express();
 app.use(
@@ -11,10 +11,11 @@ app.use(
     credentials: true,
   })
 );
+app.use(json());
 app.use(cookieParser());
 app.use(morgan("dev")); // it gives log in console whatever activity user is performing through hitting apis
 
-app.use('/api/v1/user', userRoutes)
+app.use("/api/v1/user", userRoutes);
 app.use("/ping", (req, res, next) => {
   res.send("/pong");
 });
