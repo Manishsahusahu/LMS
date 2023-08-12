@@ -5,6 +5,7 @@ import morgan from "morgan";
 import userRoutes from "./routes/user.routes.js";
 
 const app = express();
+app.use(express.urlencoded({extended: true})) // helps to get params from encoded url's
 app.use(
   cors({
     origin: [process.env.FRONTEND_URL],

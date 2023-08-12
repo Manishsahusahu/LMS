@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
 import bcrypt from "bcryptjs";
 import JWT from "jsonwebtoken";
+import crypto from "crypto";
 
 const userSchema = new Schema(
   {
@@ -52,10 +53,11 @@ const userSchema = new Schema(
   { TimeStamp: true }
 );
 
-userSchema.pre("save", async function (next) {
+userSchema.pre("save",  function (next) {
   if (!this.isModified("password")) return next();
 
   this.password = bcrypt.hash(this.password, 10);
+  next();
 });
 
 userSchema.methods = {
@@ -75,6 +77,20 @@ userSchema.methods = {
   },
   comparePassword: (plainTextPassword, encryptedPassword) => {
     return bcrypt.compare(plainTextPassword, encryptedPassword);
+  },
+  generatePasswordResetToken: function () {
+    const resetToken = crypto.randomBytes(20).toString("hex");
+
+    const encyptedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    this.forgetPasswordToken = encyptedToken;
+    console.log("inital encrypted token to database", this.forgetPasswordToken);
+    console.log("inital token to database", resetToken);
+    this.forgetPasswordExpiry = Date.now() + 15 * 60 * 1000; // 15min from now
+
+    return resetToken;
   },
 };
 
