@@ -50,7 +50,7 @@ const userSchema = new Schema(
     forgetPasswordToken: String,
     forgetPasswordExpiry: String,
   },
-  { TimeStamp: true }
+  { timestamps: true }
 );
 
 userSchema.pre("save", async function (next) {
