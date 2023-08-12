@@ -131,7 +131,6 @@ const forgotPassword = async (req, res, next) => {
   if (!user) return next(new AppError("Email is not registered", 400));
 
   const resetToken = user.generatePasswordResetToken();
-  console.log("forgot password token: ", resetToken);
   await user.save();
 
   const resetUrl = `${process.env.FRONTEND_URL}/reset/${resetToken}`;
@@ -168,8 +167,6 @@ const resetPassword = async (req, res, next) => {
     forgetPasswordToken,
     forgetPasswordExpiry: { $gt: Date.now() }, // expiry should greater than current time
   });
-    console.log(user)
-    // console.log(`Database time: ${user.forgetPasswordExpiry} and current time: ${Date.now()}`)
   if (!user) return next(new AppError("Reset password link has expired!", 400));
 
   user.password = password;
@@ -184,4 +181,77 @@ const resetPassword = async (req, res, next) => {
   });
 };
 
-export { register, login, logout, getProfile, forgotPassword, resetPassword };
+const changePassword = async (req, res, next) => {
+  const { oldPassword, newPassword } = req.body;
+  const { id } = req.user;
+
+  if (!oldPassword || !newPassword)
+    return next(new AppError("All fields are mandatory", 400));
+  const user = await User.findById(id).select("+password");
+  if (!user) return next(new AppError("User not found", 400));
+
+  const isPasswordValid = user.comparePassword(oldPassword, user.password);
+  if (!isPasswordValid)
+    return next(new AppError("Please enter valid old password", 400));
+
+  user.password = newPassword;
+  await user.save();
+
+  user.password = undefined;
+  res.status(200).json({
+    success: true,
+    message: "Password has been changed successfully",
+  });
+};
+
+const updateUser = async (req, res, next) => {
+  const { fullName } = req.body;
+  const { id } = req.user;
+  console.log("ID IS ", id)
+  const user = await User.findById(id);
+  if (!fullName) return next(new AppError("Enter the fullname", 400));
+  if (!user) return next(new AppError("user not found", 400));
+
+  if (user) {
+    user.fullName = fullName;
+  }
+
+  if (req.file) {
+    try {
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
+        folder: "lms",
+        width: 250, // in px
+        height: 250,
+        gravity: "faces",
+        crop: "fill",
+      });
+      if (result) {
+        user.avatar.public_id = result.public_id;
+        user.avatar.secure_url = result.secure_url;
+
+        // remove from local server
+        fs.rm(`uploads/${req.file.filename}`);
+      }
+    } catch (error) {
+      return next(new AppError(error, 500));
+    }
+  }
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "User details updated successfully",
+  });
+};
+
+export {
+  register,
+  login,
+  logout,
+  getProfile,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  updateUser,
+};
