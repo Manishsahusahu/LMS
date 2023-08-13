@@ -3,7 +3,6 @@ import AppError from "../utils/error.util.js";
 
 const isLoggedIn = (req, res, next) => {
   const { token } = req.cookies;
-
   if (!token) return next(new AppError("Please login", 400));
 
   const userDetails = jwt.verify(token, process.env.JWT_SECRET);
@@ -11,4 +10,15 @@ const isLoggedIn = (req, res, next) => {
   next();
 };
 
-export { isLoggedIn };
+const authorizedRoles =
+  (...roles) =>
+  async (req, res, next) => {
+    const currentUserRoles = req.user.role;
+    if (!roles.includes(currentUserRoles))
+      return next(
+        new AppError("You don't have permission for this operation", 400)
+      );
+    next();
+  };
+
+export { isLoggedIn, authorizedRoles };
