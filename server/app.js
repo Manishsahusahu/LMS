@@ -4,9 +4,10 @@ import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import userRoutes from "./routes/user.routes.js";
 import courseRoutes from "./routes/course.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
 
 const app = express();
-app.use(express.urlencoded({extended: true})) // helps to get params from encoded url's
+app.use(express.urlencoded({ extended: true })); // helps to get params from encoded url's
 app.use(
   cors({
     origin: [process.env.FRONTEND_URL],
@@ -19,7 +20,7 @@ app.use(morgan("dev")); // it gives log in console whatever activity user is per
 
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/course", courseRoutes);
-
+app.use("/api/v1/payment", paymentRoutes);
 
 app.use("/ping", (req, res, next) => {
   res.send("/pong");
